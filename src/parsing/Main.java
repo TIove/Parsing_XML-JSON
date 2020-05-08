@@ -8,8 +8,8 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 class pair<T, V> {
-    public T first = null;
-    public V second = null;
+    public T first;
+    public V second;
     public pair(T x, V y) {
         this.first = x;
         this.second = y;
@@ -126,8 +126,8 @@ public class Main {
         return str_out;
     }
 
-    private static StringBuilder xml_attribute () {/*<employee department = "manager">Garry Smith</employee> */
-        StringBuilder str_out = new StringBuilder("{\n\t\"");           /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"}*/
+    private static StringBuilder xml_attribute () {
+        StringBuilder str_out = new StringBuilder("{\n\t\"");
         it = 0;
         Pattern pattern = Pattern.compile(">\\s*");
         Matcher matcher = pattern.matcher(str);
@@ -173,7 +173,7 @@ public class Main {
                                             /* <host>127.0.0.1</host> */
                 "\\s*\\{\\s*\"[^&<>\"']*\"\\s*:\\s*\"[^&<>\"']*\"\\s*}\\s*",
                                             /* {"host":"127.0.0.1"} */
-                "\\s*<[^&<>\"']*\\s+[^&<>\"']*\\s*=\\s*\"[^&<>\"']*\">[^&<>\"']*</[^&<>\"']*>\\s*",
+                "\\s*<[^&<>\"']*\\s+[^&<>\"']*=[\\s*\"[^&<>\"']*\"\\s*]+>[^&<>\"']*</[^&<>\"']*>\\s*",
                                             /* <employee department = "manager">Garry Smith</employee> */
                 "\\s*\\{\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
                                             /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
