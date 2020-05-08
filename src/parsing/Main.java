@@ -71,10 +71,14 @@ public class Main {
         fin.close();
 
         final String[] regexes = {
-                "<[\\w\\s]*>[\\w\\s/.]*</[\\w\\s]*>", /* <host>127.0.0.1</host> */
-                "\\{\\s*\"[\\w\\s]*\"\\s*:\\s*\"[\\w\\s]*\"\\s*}", /* {"host":"127.0.0.1"} */
-                "<\\w*\\s+\\w*\\s*=\\s*\"[\\w\\s]*\">[\\w\\s]*</[\\w\\s]*>", /* <employee department = "manager">Garry Smith</employee> */
-                "\\{\"[\\w\\s]*\"\\s*:\\s*\\{[\\S\\s]+" /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
+                "\\s*<[^&<>\"']*>[^&<>\"']*</[^&<>\"']*>\\s*",
+                                            /* <host>127.0.0.1</host> */
+                "\\s*\\{\\s*\"[^&<>\"']*\"\\s*:\\s*\"[^&<>\"']*\"\\s*}\\s*",
+                                            /* {"host":"127.0.0.1"} */
+                "<[^&<>\"']*\\s+[^&<>\"']*\\s*=\\s*\"[^&<>\"']*\">[^&<>\"']*</[^&<>\"']*>",
+                                            /* <employee department = "manager">Garry Smith</employee> */
+                "\\{\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
+                                            /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
         };
         if (str.toString().matches(regexes[0])) { // XML
             res = xml_parse(str);
