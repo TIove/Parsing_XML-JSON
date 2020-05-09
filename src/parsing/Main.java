@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 class pair<T, V> {
     public T first;
     public V second;
@@ -137,7 +138,7 @@ public class Main {
         pair<String, String> title = new pair<>(null, null);
         if (matcher.find()) {
             int match = matcher.end();
-            if (match != str.length() - 1) {
+            if (match != str.length()) {
                 title.setFirst(get_word(it, false));
                 title.setSecond(get_word(match, true));
             } else {
@@ -146,18 +147,19 @@ public class Main {
         }
         miss_spc();
         str_out.append(title.getFirst()).append("\" : {\n\t\t");
-        while (str.charAt(it) != '>') {
+        while (str.charAt(it) != '>' && str.charAt(it) != '/') {
             pair<String, String> buf = get_pair();
             map.put(buf.getFirst(), buf.getSecond());
             it++;
             miss_spc();
         }
         for (var entry : map.entrySet()) {
-            str_out.append("\"@").append(entry.getKey()).append("\" : ").append(entry.getValue()).append("\",\n\t\t");
+            str_out.append("\"@").append(entry.getKey()).append("\" : \"").append(entry.getValue()).append("\",\n\t\t");
         }
         str_out.append("\"#").append(title.getFirst()).append("\" : \"").append(title.getSecond()).append("\"\n\t}\n}");
         return str_out;
     }
+
     public static void main(String[] args) throws IOException {
         File file = new File("test.txt");
         Scanner fin = new Scanner(file);
@@ -173,7 +175,7 @@ public class Main {
                                             /* <host>127.0.0.1</host> */
                 "\\s*\\{\\s*\"[^&<>\"']*\"\\s*:\\s*\"[^&<>\"']*\"\\s*}\\s*",
                                             /* {"host":"127.0.0.1"} */
-                "\\s*<[^&<>\"']*\\s+[^&<>\"']*=[\\s*\"[^&<>\"']*\"\\s*]+>[^&<>\"']*</[^&<>\"']*>\\s*",
+                "\\s*<[^&<>\"']*\\s+[[^&<>\"']*=[\\s*\"[^&<>\"']*\"\\s*]*]*/*>[\\s\\S]*",
                                             /* <employee department = "manager">Garry Smith</employee> */
                 "\\s*\\{\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
                                             /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
