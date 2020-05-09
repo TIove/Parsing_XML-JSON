@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,18 +37,28 @@ public class Main {
     private static StringBuilder str = new StringBuilder();
 
     private static void miss_spc() {
+        if (str.length() - 1 < it) {
+            return;
+        }
         while (str.charAt(it) == ' ') {
             it++;
         }
     }
-    private static pair get_pair() {
+    private static pair get_pair(boolean is_spc_first, boolean is_spc_second) {
         pair<String, String> ans = new pair<>(null, null);
-        ans.setFirst(get_word(it, false));
-        miss_spc();
-        it ++;
+        ans.setFirst(get_word(it, is_spc_first));/*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
+        if (str.charAt(it) != ' ') {             /*<employee department = "manager">Garry Smith</employee> */
+            it++;
+        }
         miss_spc();
         it++;
-        ans.setSecond(get_word(it,false));
+        miss_spc();
+        if (str.charAt(it) == '\"') {
+            it++;
+            ans.setSecond(get_word(it, is_spc_second));
+            return ans;
+        }
+        ans.setSecond(get_word(it, true));
         return ans;
     }
 
@@ -58,12 +69,12 @@ public class Main {
         }
         StringBuilder str_out = new StringBuilder();
         if (is_ignore_spc) {
-            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>') {
+            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>' && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
                 str_out.append(str.charAt(iter));
                 iter++;
             }
         } else {
-            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>' && str.charAt(iter) != ' ') {
+            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>' && str.charAt(iter) != ' ' && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
                 str_out.append(str.charAt(iter));
                 iter++;
             }
@@ -99,30 +110,27 @@ public class Main {
 
     private static StringBuilder json_parse () {
         StringBuilder str_out = new StringBuilder("<");
-        StringBuilder Ttl = new StringBuilder();
-        int i = 0;
-        while(str.charAt(i) != '\"'){
-            i++;
+        String title;
+        it = 1;
+        while(str.charAt(it) != '\"'){
+            it++;
         }
-        i++;
-        while (str.charAt(i) != '\"') {
-            Ttl.append(str.charAt(i));
-            i++;
+        it++;
+        title = get_word(it, true);
+        it++;
+        while(str.charAt(it) != '\"' && it != str.length() - 1) {
+            it++;
         }
-        i++;
-        while(str.charAt(i) != '\"' && i != str.length() - 1) {
-            i++;
-        }
-        if (str.charAt(i) == '}') {
-            str_out.append(Ttl).append("/>");
+        if (str.charAt(it) == '}') {
+            str_out.append(title).append("/>");
         } else {
-            i++;
-            str_out.append(Ttl).append('>');
-            while (str.charAt(i) != '\"') {
-                str_out.append(str.charAt(i));
-                i++;
+            it++;
+            str_out.append(title).append('>');
+            while (str.charAt(it) != '\"') {
+                str_out.append(str.charAt(it));
+                it++;
             }
-            str_out.append("</").append(Ttl).append('>');
+            str_out.append("</").append(title).append('>');
         }
         return str_out;
     }
@@ -148,7 +156,7 @@ public class Main {
         miss_spc();
         str_out.append(title.getFirst()).append("\" : {\n\t\t");
         while (str.charAt(it) != '>' && str.charAt(it) != '/') {
-            pair<String, String> buf = get_pair();
+            pair<String, String> buf = get_pair(false, false);
             map.put(buf.getFirst(), buf.getSecond());
             it++;
             miss_spc();
@@ -156,7 +164,56 @@ public class Main {
         for (var entry : map.entrySet()) {
             str_out.append("\"@").append(entry.getKey()).append("\" : \"").append(entry.getValue()).append("\",\n\t\t");
         }
-        str_out.append("\"#").append(title.getFirst()).append("\" : \"").append(title.getSecond()).append("\"\n\t}\n}");
+        str_out.append("\"#").append(title.getFirst()).append("\" : ");
+        if (title.getSecond() == null) {
+            str_out.append("null\n\t}\n}");
+        } else {
+            str_out.append("\"").append(title.getSecond()).append("\"\n\t}\n}");
+        }
+
+        return str_out;
+    }
+
+    private static StringBuilder json_attribute () {
+        StringBuilder str_out = new StringBuilder("<");
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        it = 1;
+        while(str.charAt(it) != '\"') {
+            it++;
+        }
+        it++;
+        String title = get_word(it, true);
+        while (str.charAt(it) != '{') {
+            it++;
+        }
+        it ++;
+        miss_spc();
+        it ++;
+        while (str.charAt(it) != ' ' && str.charAt(it) != '}') {
+            pair<String, String> buf = get_pair(true, true);
+            map.put(buf.getFirst(), buf.getSecond());
+            if (it + 3 > str.length() - 1)
+                break;
+            it += 2;
+            miss_spc();
+            it++;
+        }
+        boolean is_title_name = false;
+        str_out.append(title);
+        for (var entry : map.entrySet()) {
+            if (!entry.getKey().matches("#[\\s\\S]*")) {
+                str_out.append(' ').append(entry.getKey().substring(1)).append(" = \"").append(entry.getValue()).append('\"');
+            } else
+                if (!entry.getValue().matches("\\s*null\\s*")) {
+                    is_title_name = true;
+            }
+        }
+        if (is_title_name) {
+            str_out.append('>').append(map.get('#' + title)).append("</").append(title).append('>');
+        } else {
+            str_out.append(" />");
+        }
+
         return str_out;
     }
 
@@ -177,7 +234,7 @@ public class Main {
                                             /* {"host":"127.0.0.1"} */
                 "\\s*<[^&<>\"']*\\s+[[^&<>\"']*=[\\s*\"[^&<>\"']*\"\\s*]*]*/*>[\\s\\S]*",
                                             /* <employee department = "manager">Garry Smith</employee> */
-                "\\s*\\{\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
+                "\\s*\\{\\s*\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
                                             /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
         };
         if (str.toString().matches(regexes[0])) { // XML
@@ -187,7 +244,7 @@ public class Main {
         } else if (str.toString().matches(regexes[2])) { //Attribute XML
             res = xml_attribute();
         } else if (str.toString().matches(regexes[3])) { //Attribute JSON
-            System.out.println("JSON 2: " + str);
+            res = json_attribute();
         }
         else {
             System.out.println("default");
