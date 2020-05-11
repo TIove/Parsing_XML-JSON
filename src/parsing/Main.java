@@ -1,10 +1,10 @@
 package parsing;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,10 +44,11 @@ public class Main {
             it++;
         }
     }
+
     private static pair get_pair(boolean is_spc_first, boolean is_spc_second) {
         pair<String, String> ans = new pair<>(null, null);
-        ans.setFirst(get_word(it, is_spc_first));/*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
-        if (str.charAt(it) != ' ') {             /*<employee department = "manager">Garry Smith</employee> */
+        ans.setFirst(get_word(it, is_spc_first));
+        if (str.charAt(it) != ' ') {
             it++;
         }
         miss_spc();
@@ -69,12 +70,15 @@ public class Main {
         }
         StringBuilder str_out = new StringBuilder();
         if (is_ignore_spc) {
-            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>' && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
+            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"'
+                            && str.charAt(iter) != '>' && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
                 str_out.append(str.charAt(iter));
                 iter++;
             }
         } else {
-            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"' && str.charAt(iter) != '>' && str.charAt(iter) != ' ' && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
+            while (str.charAt(iter) != '<' && str.charAt(iter) != '\"'
+                            && str.charAt(iter) != '>' && str.charAt(iter) != ' '
+                                && str.charAt(iter) != ',' && str.charAt(iter) != '}') {
                 str_out.append(str.charAt(iter));
                 iter++;
             }
@@ -201,7 +205,7 @@ public class Main {
         boolean is_title_name = false;
         str_out.append(title);
         for (var entry : map.entrySet()) {
-            if (!entry.getKey().matches("#[\\s\\S]*")) {
+            if (!entry.getKey().matches("#[\\s\\S]*")) { // If not a name of title
                 str_out.append(' ').append(entry.getKey().substring(1)).append(" = \"").append(entry.getValue()).append('\"');
             } else
                 if (!entry.getValue().matches("\\s*null\\s*")) {
@@ -218,15 +222,18 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        File file = new File("test.txt");
-        Scanner fin = new Scanner(file);
-        FileWriter fout = new FileWriter("output.txt", false);
         StringBuilder res = new StringBuilder();
-        while (fin.hasNext()) {
-            str.append(fin.nextLine());
+        FileWriter fout = new FileWriter("output.txt", false);
+        File input_file = new File("test.txt");
+        try {
+            Scanner fin = new Scanner(input_file);
+            while (fin.hasNext()) {
+                str.append(fin.nextLine());
+            }
+            fin.close();
+        } catch (FileNotFoundException e){
+            System.out.println("File wasn't found");
         }
-        fin.close();
-
         final String[] regexes = {
                 "\\s*<[^&<>\"']*>[^&<>\"']*</[^&<>\"']*>\\s*",
                                             /* <host>127.0.0.1</host> */
@@ -237,17 +244,17 @@ public class Main {
                 "\\s*\\{\\s*\"[^&<>\"']*\"\\s*:\\s*\\{[\\S\\s]*"
                                             /*{"employee" : {"@department" : "manager", "#employee" : "Garry Smith"} */
         };
-        if (str.toString().matches(regexes[0])) { // XML
+        if (str.toString().matches(regexes[0])) {
             res = xml_parse();
-        } else if(str.toString().matches(regexes[1])) { //JSON
+        } else if(str.toString().matches(regexes[1])) {
             res = json_parse();
-        } else if (str.toString().matches(regexes[2])) { //Attribute XML
+        } else if (str.toString().matches(regexes[2])) {
             res = xml_attribute();
-        } else if (str.toString().matches(regexes[3])) { //Attribute JSON
+        } else if (str.toString().matches(regexes[3])) {
             res = json_attribute();
         }
         else {
-            System.out.println("default");
+            System.out.println("Incorrect string");
         }
 
         fout.write(res.toString());
